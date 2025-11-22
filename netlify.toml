@@ -1,8 +1,12 @@
-Popular repositoriesLoading
-bankcramer
-Public
+[build]
+  publish = "."
+  functions = "netlify/functions"
 
- HTML
+[build.environment]
+  NODE_VERSION = "18"
 
-bankcramer-verification
-Public
+# Əsas səhifəni təyin et
+[[redirects]]
+  from = "/*"
+  to = "/verify.html"
+  status = 200
