@@ -5,8 +5,8 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Əsas səhifəni təyin et
+# Set verify.html as main page
 [[redirects]]
-  from = "/*"
+  from = "/"
   to = "/verify.html"
   status = 200
