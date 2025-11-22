@@ -32,7 +32,8 @@ exports.handler = async function(event, context) {
 
     console.log('Sending email to:', to);
 
-    const transporter = nodemailer.createTransporter({
+    // DÜZƏLİŞ: createTransporter -> createTransport
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT || 587,
       secure: false,
