@@ -31,11 +31,13 @@ exports.handler = async function(event, context) {
     }
 
     console.log('Sending email to:', to);
+    console.log('SMTP Host:', process.env.SMTP_HOST);
+    console.log('SMTP Port:', process.env.SMTP_PORT);
 
-    // DÜZƏLDİ: Port 465 və secure: true
+    // YENİ SMTP KONFİQURASİYASI
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: 465,
+      port: parseInt(process.env.SMTP_PORT) || 465,
       secure: true,
       auth: {
         user: process.env.SMTP_USER,
@@ -66,7 +68,7 @@ exports.handler = async function(event, context) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    console.log('Email sent successfully:', info.messageId);
 
     return {
       statusCode: 200,
