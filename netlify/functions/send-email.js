@@ -15,7 +15,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ success: false, message: 'Metod icazə verilmir' })
+      body: JSON.stringify({ success: false, message: 'Method not allowed' })
     };
   }
 
@@ -26,11 +26,11 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ success: false, message: 'E-poçt və kod tələb olunur' })
+        body: JSON.stringify({ success: false, message: 'Email and code required' })
       };
     }
 
-    console.log('E-poçt göndərilir:', to);
+    console.log('Sending email to:', to);
 
     const transporter = nodemailer.createTransporter({
       host: process.env.SMTP_HOST,
@@ -48,42 +48,42 @@ exports.handler = async function(event, context) {
     const mailOptions = {
       from: process.env.SMTP_FROM || 'info@bankcramer.com',
       to: to,
-      subject: 'Bank Cramer - Təsdiq Kodu',
+      subject: 'Bank Cramer - Verification Code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #3498db;">Bank Cramer</h2>
-          <p>Sizin təsdiq kodunuz:</p>
+          <p>Your verification code:</p>
           <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #2c3e50;">
             ${code}
           </div>
           <p style="color: #7f8c8d; font-size: 14px; margin-top: 20px;">
-            Bu kod 10 dəqiqə ərzində etibarlıdır.<br>
-            Əgər siz bu kodu istəməmisinizsə, bu e-poçtu görməzdən gəlin.
+            This code is valid for 10 minutes.<br>
+            If you didn't request this code, please ignore this email.
           </p>
         </div>
       `
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('E-poçt göndərildi:', info.messageId);
+    console.log('Email sent:', info.messageId);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
         success: true, 
-        message: 'Təsdiq kodu uğurla göndərildi' 
+        message: 'Verification code sent successfully' 
       })
     };
 
   } catch (error) {
-    console.error('E-poçt göndərmə xətası:', error);
+    console.error('Email sending error:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         success: false, 
-        message: 'Təsdiq kodu göndərilmədi: ' + error.message 
+        message: 'Failed to send verification code: ' + error.message 
       })
     };
   }
