@@ -32,11 +32,11 @@ exports.handler = async function(event, context) {
 
     console.log('Sending email to:', to);
 
-    // DÜZƏLİŞ: createTransporter -> createTransport
+    // DÜZƏLDİ: Port 465 və secure: true
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT || 587,
-      secure: false,
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
