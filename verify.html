@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Cramer Verification</title>
+<style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+    body{display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f2f5;}
+    .container{background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);width:90%;max-width:400px;}
+    .step{display:none;}
+    .step.active{display:block;}
+    input{width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:6px;}
+    button{padding:10px 15px;background:#3498db;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;}
+    button:disabled{background:#aaa;cursor:not-allowed;}
+    .error{color:red;margin-top:10px;display:none;font-size:14px;}
+    .success{color:green;margin-top:10px;display:none;}
+    .loading{display:none;color:#3498db;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="container">
+    <!-- Step 1: Reference Number -->
+    <div class="step active" id="step1">
+        <h2>Step 1: Reference Number</h2>
+        <input type="text" id="referenceNumber" placeholder="Enter your reference number" required>
+        <button id="step1Next">Next</button>
+    </div>
+
+    <!-- Step 2: Email -->
+    <div class="step" id="step2">
+        <h2>Step 2: Email Address</h2>
+        <input type="email" id="email" placeholder="Enter your email" required>
+        <button id="sendCode">Send Verification Code</button>
+        <div class="loading" id="emailLoading">Sending code...</div>
+        <div class="error" id="emailError"></div>
+    </div>
+
+    <!-- Step 3: Verification Code -->
+    <div class="step" id="step3">
+        <h2>Step 3: Enter Verification Code</h2>
+        <input type="text" id="codeInput" placeholder="6-digit code" maxlength="6" inputmode="numeric">
+        <button id="verifyCode">Verify Code</button>
+        <div class="error" id="codeError"></div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div class="step" id="step4">
+        <h2>Success!</h2>
+        <div class="success">Your account has been verified successfully.</div>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+let verificationCode = '';
+let codeExpiry;
+
+function showStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + step).classList.add('active');
+    currentStep = step;
+}
+
+function setLoading(button, loading) {
+    const emailLoading = document.getElementById('emailLoading');
+    if (loading) {
+        button.disabled = true;
+        button.textContent = 'Sending...';
+        emailLoading.style.display = 'block';
+    } else {
+        button.disabled = false;
+        button.textContent = 'Send Verification Code';
+        emailLoading.style.display = 'none';
+    }
+}
+
+// Step 1: Reference Number
+document.getElementById('step1Next').addEventListener('click', () => {
+    const ref = document.getElementById('referenceNumber').value.trim();
+    if (ref !== '') {
+        showStep(2);
+    } else {
+        alert('Please enter your reference number');
+    }
+});
+
+// Step 2: Email
+document.getElementById('sendCode').addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const emailError = document.getElementById('emailError');
+    const sendButton = document.getElementById('sendCode');
+    
+    emailError.style.display = 'none';
+
+    if (email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailError.textContent = 'Please enter a valid email address';
+        emailError.style.display = 'block';
+        return;
+    }
+
+    // Generate 6-digit code
+    verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    codeExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    
+    setLoading(sendButton, true);
+
+    try {
+        const response = await fetch('/.netlify/functions/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                to: email, 
+                code: verificationCode 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showStep(3);
+            // Auto-focus on code input
+            setTimeout(() => document.getElementById('codeInput').focus(), 100);
+        } else {
+            emailError.textContent = data.message || 'Failed to send verification code';
+            emailError.style.display = 'block';
+        }
+
+    } catch (error) {
+        emailError.textContent = 'Network error. Please try again.';
+        emailError.style.display = 'block';
+    } finally {
+        setLoading(sendButton, false);
+    }
+});
+
+// Step 3: Verification Code
+document.getElementById('verifyCode').addEventListener('click', () => {
+    const code = document.getElementById('codeInput').value.trim();
+    const codeError = document.getElementById('codeError');
+    codeError.style.display = 'none';
+
+    // Check if code expired
+    if (Date.now() > codeExpiry) {
+        codeError.textContent = 'Verification code has expired. Please request a new one.';
+        codeError.style.display = 'block';
+        return;
+    }
+
+    if (code === verificationCode) {
+        showStep(4);
+    } else {
+        codeError.textContent = 'Invalid verification code. Please try again.';
+        codeError.style.display = 'block';
+    }
+});
+
+// Auto-advance when 6 digits entered
+document.getElementById('codeInput').addEventListener('input', (e) => {
+    if (e.target.value.length === 6) {
+        document.getElementById('verifyCode').click();
+    }
+});
+
+// Enter key support
+document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        if (currentStep === 1) {
+            document.getElementById('step1Next').click();
+        } else if (currentStep === 2) {
+            document.getElementById('sendCode').click();
+        } else if (currentStep === 3) {
+            document.getElementById('verifyCode').click();
+        }
+    }
+});
+</script>
+</body>
+</html>
