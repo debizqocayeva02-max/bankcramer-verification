@@ -4,9 +4,3 @@
 
 [build.environment]
   NODE_VERSION = "18"
-
-# Əsas səhifəni təyin et
-[[redirects]]
-  from = "/*"
-  to = "/verify.html"
-  status = 200
